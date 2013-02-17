@@ -1,0 +1,56 @@
+Index: arch/i386/i386/busfunc.S
+===================================================================
+RCS file: /home/kiwamu/cvs_mirror/NetBSD-CVSROOT/src/sys/arch/i386/i386/busfunc.S,v
+retrieving revision 1.8
+diff -c -u -r1.8 busfunc.S
+--- arch/i386/i386/busfunc.S	20 May 2011 13:17:12 -0000	1.8
++++ arch/i386/i386/busfunc.S	16 Feb 2013 08:01:46 -0000
+@@ -92,7 +92,7 @@
+  * void bus_space_write_1(bus_space_tag_t tag, bus_space_handle_t bsh,
+  *    bus_size_t offset, uint8_t value);
+  */
+-ENTRY(bus_space_write_1)
++ENTRY(bus_space_write_1_ll)
+ 	movl	4(%esp), %eax
+ 	movl	8(%esp), %edx
+ 	addl	12(%esp), %edx
+Index: kern/kern_stub.c
+===================================================================
+RCS file: /home/kiwamu/cvs_mirror/NetBSD-CVSROOT/src/sys/kern/kern_stub.c,v
+retrieving revision 1.36
+diff -c -u -r1.36 kern_stub.c
+--- kern/kern_stub.c	31 Aug 2011 20:09:57 -0000	1.36
++++ kern/kern_stub.c	16 Feb 2013 10:04:02 -0000
+@@ -294,3 +294,32 @@
+ 
+ 	return memcmp(&t1, &t2, sizeof(t1)) == 0;
+ }
++
++void bus_space_write_1_ll(bus_space_tag_t, bus_space_handle_t, bus_size_t, uint8_t);
++
++int whileprint_retaddr1 = 0xf0f0f0f0;
++int whileprint_retaddr2 = 0xf0f0f0f0;
++int whileprint_retaddr3 = 0xf0f0f0f0;
++
++struct i386_frame {
++	struct i386_frame	*f_frame;
++	int			f_retaddr;
++	int			f_arg0;
++};
++
++void
++bus_space_write_1(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t offset, uint8_t value)
++{
++	struct i386_frame *frame;
++
++	if (strcmp("whileprint", curproc->p_comm) == 0) {
++		asm volatile("movl %%ebp, %0" : "=r" (frame));
++		whileprint_retaddr1 = frame->f_retaddr;
++		frame = frame->f_frame;
++		whileprint_retaddr2 = frame->f_retaddr;
++		frame = frame->f_frame;
++		whileprint_retaddr3 = frame->f_retaddr;
++	}
++
++	bus_space_write_1_ll(tag, bsh, offset, value);
++}

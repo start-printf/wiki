@@ -32,4 +32,7 @@ printf関数をアプリケーションが呼び出した時に何が起きる�
 
 ## 雑多なファイル
 
-Wikiでは管理しにくい雑多なファイルは本リポジトリにてきとうに置く予定です。
+Wikiでは管理しにくい雑多なファイルは本リポジトリに置く予定です。
+
+* bus_space_trace.patch := whileprintのbus_space_write_1呼び出しbacktrace
+* whileprint.objdump-S  := whileprintプログラムの逆アセンブル
